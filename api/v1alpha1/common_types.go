@@ -101,3 +101,7 @@ type KubernetesNameRef string
 // +kubebuilder:validation:MinLength:=1
 // +kubebuilder:validation:MaxLength:=64
 type KeystoneName string
+
+// +kubebuilder:validation:MinLength:=1
+// +kubebuilder:validation:MaxLength:=80
+type BlazarName string

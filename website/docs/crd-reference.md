@@ -480,6 +480,22 @@ _Appears in:_
 
 
 
+#### BlazarName
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- MaxLength: 80
+- MinLength: 1
+
+_Appears in:_
+- [LeaseFilter](#leasefilter)
+- [LeaseResourceSpec](#leaseresourcespec)
+
+
+
 #### CIDR
 
 _Underlying type:_ _string_
@@ -2292,8 +2308,27 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `name` _[OpenStackName](#openstackname)_ | name of the existing resource |  | MaxLength: 255 <br />MinLength: 1 <br />Pattern: `^[^,]+$` <br />Optional: \{\} <br /> |
-| `description` _string_ | description of the existing resource |  | MaxLength: 255 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+| `name` _[BlazarName](#blazarname)_ | name of the existing resource |  | MaxLength: 80 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+
+
+#### LeaseHostReservation
+
+
+
+LeaseHostReservation reserves whole compute hosts for the duration of the
+lease.
+
+
+
+_Appears in:_
+- [LeaseReservation](#leasereservation)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `min` _integer_ | min is the smallest number of hosts the lease can be satisfied with. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `max` _integer_ | max is the largest number of hosts to reserve. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `hypervisorProperties` _string_ | hypervisorProperties filters the candidate hosts on the properties Nova<br />reports, e.g. `[">=", "$vcpus", "4"]`. |  | MaxLength: 1024 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+| `resourceProperties` _string_ | resourceProperties filters the candidate hosts on their extra<br />capabilities, e.g. `["==", "$gpu", "a100"]`. |  | MaxLength: 1024 <br />MinLength: 1 <br />Optional: \{\} <br /> |
 
 
 #### LeaseImport
@@ -2316,6 +2351,67 @@ _Appears in:_
 | `filter` _[LeaseFilter](#leasefilter)_ | filter contains a resource query which is expected to return a single<br />result. The controller will continue to retry if filter returns no<br />results. If filter returns multiple results the controller will set an<br />error state and will not continue to retry. |  | MinProperties: 1 <br />Optional: \{\} <br /> |
 
 
+#### LeaseInstanceReservation
+
+
+
+LeaseInstanceReservation reserves capacity for instances of a given size
+for the duration of the lease.
+
+
+
+_Appears in:_
+- [LeaseReservation](#leasereservation)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `amount` _integer_ | amount is the number of instances to reserve capacity for. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `vcpus` _integer_ | vcpus is the number of virtual CPUs per instance. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `memoryMB` _integer_ | memoryMB is the amount of memory per instance, in megabytes. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `diskGB` _integer_ | diskGB is the amount of disk per instance, in gigabytes. |  | Minimum: 0 <br />Required: \{\} <br /> |
+| `affinity` _boolean_ | affinity places the instances on the same host if true, or on distinct<br />hosts if false. If not specified, placement is left to Nova. |  | Optional: \{\} <br /> |
+| `resourceProperties` _string_ | resourceProperties filters the candidate hosts on their extra<br />capabilities, e.g. `["==", "$gpu", "a100"]`. |  | MaxLength: 1024 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+
+
+#### LeaseReservation
+
+
+
+LeaseReservation is a single reservation within a lease. Exactly one of
+host or instance must be specified.
+
+
+
+_Appears in:_
+- [LeaseResourceSpec](#leaseresourcespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `host` _[LeaseHostReservation](#leasehostreservation)_ | host reserves whole compute hosts. |  | Optional: \{\} <br /> |
+| `instance` _[LeaseInstanceReservation](#leaseinstancereservation)_ | instance reserves capacity for instances of a given size. |  | Optional: \{\} <br /> |
+
+
+#### LeaseReservationStatus
+
+
+
+LeaseReservationStatus represents the observed state of a reservation
+within a lease.
+
+
+
+_Appears in:_
+- [LeaseResourceStatus](#leaseresourcestatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `id` _string_ | id is the ID of the reservation. For host reservations it is passed to<br />Nova as the `reservation` scheduler hint. |  | MaxLength: 36 <br />Optional: \{\} <br /> |
+| `resourceType` _string_ | resourceType is the type of resource reserved, e.g. `physical:host`<br />or `virtual:instance`. |  | MaxLength: 66 <br />Optional: \{\} <br /> |
+| `status` _string_ | status is the status of the reservation. |  | MaxLength: 13 <br />Optional: \{\} <br /> |
+| `flavorID` _string_ | flavorID is the ID of the flavor Blazar created for an instance<br />reservation. Instances must be created with this flavor to consume the<br />reservation. |  | MaxLength: 36 <br />Optional: \{\} <br /> |
+| `serverGroupID` _string_ | serverGroupID is the ID of the server group Blazar created for an<br />instance reservation. |  | MaxLength: 36 <br />Optional: \{\} <br /> |
+
+
 #### LeaseResourceSpec
 
 
@@ -2329,8 +2425,10 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `name` _[OpenStackName](#openstackname)_ | name will be the name of the created resource. If not specified, the<br />name of the ORC object will be used. |  | MaxLength: 255 <br />MinLength: 1 <br />Pattern: `^[^,]+$` <br />Optional: \{\} <br /> |
-| `description` _string_ | description is a human-readable description for the resource. |  | MaxLength: 255 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+| `name` _[BlazarName](#blazarname)_ | name will be the name of the created resource. If not specified, the<br />name of the ORC object will be used. |  | MaxLength: 80 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+| `startDate` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | startDate is the time at which the lease starts. If not specified, the<br />lease starts as soon as it is created. Blazar truncates it to the<br />minute. |  | Optional: \{\} <br /> |
+| `endDate` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | endDate is the time at which the lease ends. Blazar truncates it to the<br />minute. |  | Required: \{\} <br /> |
+| `reservations` _[LeaseReservation](#leasereservation) array_ | reservations are the resources reserved for the duration of the lease. |  | MaxItems: 32 <br />MinItems: 1 <br />Required: \{\} <br /> |
 
 
 #### LeaseResourceStatus
@@ -2347,7 +2445,13 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `name` _string_ | name is a Human-readable name for the resource. Might not be unique. |  | MaxLength: 1024 <br />Optional: \{\} <br /> |
-| `description` _string_ | description is a human-readable description for the resource. |  | MaxLength: 1024 <br />Optional: \{\} <br /> |
+| `status` _string_ | status is the status of the lease. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
+| `degraded` _boolean_ | degraded is true if some of the reserved resources are unavailable. |  | Optional: \{\} <br /> |
+| `startDate` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | startDate is the time at which the lease starts. |  | Optional: \{\} <br /> |
+| `endDate` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | endDate is the time at which the lease ends. |  | Optional: \{\} <br /> |
+| `projectID` _string_ | projectID is the ID of the project that owns the lease. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
+| `userID` _string_ | userID is the ID of the user that created the lease. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
+| `reservations` _[LeaseReservationStatus](#leasereservationstatus) array_ | reservations are the reservations within the lease. |  | MaxItems: 32 <br />Optional: \{\} <br /> |
 
 
 #### LeaseSpec
@@ -2941,8 +3045,6 @@ _Appears in:_
 - [ImageResourceSpec](#imageresourcespec)
 - [KeyPairFilter](#keypairfilter)
 - [KeyPairResourceSpec](#keypairresourcespec)
-- [LeaseFilter](#leasefilter)
-- [LeaseResourceSpec](#leaseresourcespec)
 - [NetworkFilter](#networkfilter)
 - [NetworkResourceSpec](#networkresourcespec)
 - [PortFilter](#portfilter)
