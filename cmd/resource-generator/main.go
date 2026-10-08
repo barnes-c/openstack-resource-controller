@@ -243,6 +243,9 @@ var resources []templateFields = []templateFields{
 			},
 		},
 	},
+	{
+		Name: "Lease",
+	},
 }
 
 // These resources won't be generated

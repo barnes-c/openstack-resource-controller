@@ -180,6 +180,8 @@ nameReference:
     path: spec/cloudCredentialsRef/secretName
   - kind: KeyPair
     path: spec/cloudCredentialsRef/secretName
+  - kind: Lease
+    path: spec/cloudCredentialsRef/secretName
   - kind: Limit
     path: spec/cloudCredentialsRef/secretName
   - kind: Network
