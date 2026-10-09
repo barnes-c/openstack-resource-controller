@@ -6,7 +6,7 @@ metadata:
 status:
   resource:
     name: lease-create-minimal
-    # TODO(scaffolding): Add all fields the resource supports
+    status: ACTIVE
   conditions:
   - type: Available
     status: "True"
@@ -24,4 +24,7 @@ resourceRefs:
       ref: lease
 assertAll:
     - celExpr: "lease.status.id != ''"
-    # TODO(scaffolding): Add more checks
+    - celExpr: "size(lease.status.resource.reservations) == 1"
+    - celExpr: "lease.status.resource.reservations[0].resourceType == 'virtual:instance'"
+    # Blazar names the reserved flavor after the reservation
+    - celExpr: "lease.status.resource.reservations[0].flavorID == lease.status.resource.reservations[0].id"

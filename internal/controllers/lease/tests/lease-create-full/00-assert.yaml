@@ -6,15 +6,10 @@ metadata:
 status:
   resource:
     name: lease-create-full-override
-    description: Lease from "create full" test
-    # TODO(scaffolding): Add all fields the resource supports
-  conditions:
-  - type: Available
-    status: "True"
-    reason: Success
-  - type: Progressing
-    status: "False"
-    reason: Success
+    status: PENDING
+    degraded: false
+    startDate: "2095-01-01T10:00:00Z"
+    endDate: "2095-01-01T11:00:00Z"
 ---
 apiVersion: kuttl.dev/v1beta1
 kind: TestAssert
@@ -25,4 +20,13 @@ resourceRefs:
       ref: lease
 assertAll:
     - celExpr: "lease.status.id != ''"
-    # TODO(scaffolding): Add more checks
+    - celExpr: "lease.status.resource.projectID != ''"
+    - celExpr: "lease.status.resource.userID != ''"
+    - celExpr: "size(lease.status.resource.reservations) == 1"
+    - celExpr: "lease.status.resource.reservations[0].resourceType == 'virtual:instance'"
+    - celExpr: "lease.status.resource.reservations[0].flavorID == lease.status.resource.reservations[0].id"
+    # affinity: false makes Blazar create an anti-affinity server group
+    - celExpr: "lease.status.resource.reservations[0].serverGroupID != ''"
+    # The lease has not started, so it is not available yet
+    - celExpr: "lease.status.conditions.exists(c, c.type == 'Available' && c.status == 'False')"
+    - celExpr: "lease.status.conditions.exists(c, c.type == 'Progressing' && c.status == 'True')"
