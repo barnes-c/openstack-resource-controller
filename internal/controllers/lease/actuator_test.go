@@ -19,15 +19,19 @@ package lease
 import (
 	"context"
 	"errors"
+	"iter"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/gophercloud/gophercloud/v2/openstack/reservation/v1/leases"
+	"go.uber.org/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1"
+	"github.com/k-orc/openstack-resource-controller/v3/internal/osclients/mock"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v3/internal/util/errors"
 	orcapplyconfigv1alpha1 "github.com/k-orc/openstack-resource-controller/v3/pkg/clients/applyconfiguration/api/v1alpha1"
 )
@@ -157,6 +161,67 @@ func TestCreateResourceNameTooLong(t *testing.T) {
 func isTerminal(err error) bool {
 	var terminalErr *orcerrors.TerminalError
 	return errors.As(err, &terminalErr)
+}
+
+func TestListOSResourcesForAdoption(t *testing.T) {
+	startDate := time.Date(2030, 1, 1, 10, 0, 0, 0, time.UTC)
+	endDate := time.Date(2030, 1, 1, 11, 0, 0, 0, time.UTC)
+
+	osLease := func(id, name string, start, end time.Time, resourceTypes ...string) *osResourceT {
+		lease := &osResourceT{ID: id, Name: name, StartDate: start, EndDate: end}
+		for _, resourceType := range resourceTypes {
+			lease.Reservations = append(lease.Reservations, leases.Reservation{ResourceType: resourceType})
+		}
+		return lease
+	}
+
+	osLeases := []*osResourceT{
+		osLease("match", "lease", startDate, endDate, leases.ResourceTypeInstance, leases.ResourceTypeHost),
+		osLease("other-name", "other", startDate, endDate, leases.ResourceTypeHost, leases.ResourceTypeInstance),
+		osLease("other-start", "lease", startDate.Add(time.Hour), endDate, leases.ResourceTypeHost, leases.ResourceTypeInstance),
+		osLease("other-end", "lease", startDate, endDate.Add(time.Hour), leases.ResourceTypeHost, leases.ResourceTypeInstance),
+		osLease("other-types", "lease", startDate, endDate, leases.ResourceTypeHost, leases.ResourceTypeHost),
+		osLease("fewer-reservations", "lease", startDate, endDate, leases.ResourceTypeHost),
+	}
+
+	obj := &orcv1alpha1.Lease{}
+	obj.Name = "lease"
+	obj.Spec.Resource = &orcv1alpha1.LeaseResourceSpec{
+		// Seconds are truncated by Blazar
+		StartDate: ptr.To(metav1.NewTime(startDate.Add(30 * time.Second))),
+		EndDate:   metav1.NewTime(endDate),
+		Reservations: []orcv1alpha1.LeaseReservation{
+			{Host: &orcv1alpha1.LeaseHostReservation{Min: 1, Max: 1}},
+			{Instance: &orcv1alpha1.LeaseInstanceReservation{Amount: 1, Vcpus: 1, MemoryMB: 128, DiskGB: ptr.To[int32](1)}},
+		},
+	}
+
+	mockctrl := gomock.NewController(t)
+	leaseClient := mock.NewMockLeaseClient(mockctrl)
+	leaseClient.EXPECT().ListLeases(gomock.Any(), gomock.Any()).Return(
+		iter.Seq2[*osResourceT, error](func(yield func(*osResourceT, error) bool) {
+			for _, lease := range osLeases {
+				if !yield(lease, nil) {
+					return
+				}
+			}
+		}))
+
+	results, ok := leaseActuator{osClient: leaseClient}.ListOSResourcesForAdoption(context.TODO(), obj)
+	if !ok {
+		t.Fatal("expected adoption to be possible")
+	}
+
+	var got []string
+	for lease, err := range results {
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got = append(got, lease.ID)
+	}
+	if len(got) != 1 || got[0] != "match" {
+		t.Errorf("expected only the matching lease, got %v", got)
+	}
 }
 
 func TestApplyResourceStatusReservationIDs(t *testing.T) {

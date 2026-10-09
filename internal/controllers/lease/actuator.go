@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"slices"
 	"time"
 
 	"github.com/gophercloud/gophercloud/v2/openstack/reservation/v1/leases"
@@ -93,13 +94,19 @@ func (actuator leaseActuator) ListOSResourcesForAdoption(ctx context.Context, or
 
 	name := getResourceName(orcObject)
 	endDate := toBlazarDate(resourceSpec.EndDate.Time)
+	reservationTypes := specReservationTypes(resourceSpec)
 
+	// Blazar allows duplicate lease names, so also match the dates and the
+	// types of the reservations to avoid adopting an unrelated lease.
 	filters := []osclients.ResourceFilter[osResourceT]{
 		func(l *leases.Lease) bool {
 			if l.Name != name || !l.EndDate.Equal(endDate) {
 				return false
 			}
-			return resourceSpec.StartDate == nil || l.StartDate.Equal(toBlazarDate(resourceSpec.StartDate.Time))
+			if resourceSpec.StartDate != nil && !l.StartDate.Equal(toBlazarDate(resourceSpec.StartDate.Time)) {
+				return false
+			}
+			return slices.Equal(osReservationTypes(l), reservationTypes)
 		},
 	}
 
@@ -180,6 +187,32 @@ func reservationOpts(reservation *orcv1alpha1.LeaseReservation) leases.Reservati
 		Affinity:           instance.Affinity,
 		ResourceProperties: ptr.Deref(instance.ResourceProperties, ""),
 	}
+}
+
+// specReservationTypes returns the sorted Blazar resource types of the
+// reservations in the spec.
+func specReservationTypes(resourceSpec *resourceSpecT) []string {
+	types := make([]string, len(resourceSpec.Reservations))
+	for i := range resourceSpec.Reservations {
+		if resourceSpec.Reservations[i].Host != nil {
+			types[i] = leases.ResourceTypeHost
+		} else {
+			types[i] = leases.ResourceTypeInstance
+		}
+	}
+	slices.Sort(types)
+	return types
+}
+
+// osReservationTypes returns the sorted resource types of the reservations of
+// a lease.
+func osReservationTypes(l *leases.Lease) []string {
+	types := make([]string, len(l.Reservations))
+	for i := range l.Reservations {
+		types[i] = l.Reservations[i].ResourceType
+	}
+	slices.Sort(types)
+	return types
 }
 
 // toBlazarDate returns the date as Blazar stores it: in UTC, truncated to the
