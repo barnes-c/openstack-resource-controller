@@ -5844,6 +5844,18 @@ func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseResourceStatus(re
 							Format:      "",
 						},
 					},
+					"createdAt": {
+						SchemaProps: spec.SchemaProps{
+							Description: "createdAt shows the date and time when the resource was created.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"updatedAt": {
+						SchemaProps: spec.SchemaProps{
+							Description: "updatedAt shows the date and time when the resource was updated.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
 					"reservations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{

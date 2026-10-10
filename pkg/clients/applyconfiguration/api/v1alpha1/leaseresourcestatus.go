@@ -32,6 +32,8 @@ type LeaseResourceStatusApplyConfiguration struct {
 	EndDate      *v1.Time                                   `json:"endDate,omitempty"`
 	ProjectID    *string                                    `json:"projectID,omitempty"`
 	UserID       *string                                    `json:"userID,omitempty"`
+	CreatedAt    *v1.Time                                   `json:"createdAt,omitempty"`
+	UpdatedAt    *v1.Time                                   `json:"updatedAt,omitempty"`
 	Reservations []LeaseReservationStatusApplyConfiguration `json:"reservations,omitempty"`
 }
 
@@ -94,6 +96,22 @@ func (b *LeaseResourceStatusApplyConfiguration) WithProjectID(value string) *Lea
 // If called multiple times, the UserID field is set to the value of the last call.
 func (b *LeaseResourceStatusApplyConfiguration) WithUserID(value string) *LeaseResourceStatusApplyConfiguration {
 	b.UserID = &value
+	return b
+}
+
+// WithCreatedAt sets the CreatedAt field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the CreatedAt field is set to the value of the last call.
+func (b *LeaseResourceStatusApplyConfiguration) WithCreatedAt(value v1.Time) *LeaseResourceStatusApplyConfiguration {
+	b.CreatedAt = &value
+	return b
+}
+
+// WithUpdatedAt sets the UpdatedAt field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the UpdatedAt field is set to the value of the last call.
+func (b *LeaseResourceStatusApplyConfiguration) WithUpdatedAt(value v1.Time) *LeaseResourceStatusApplyConfiguration {
+	b.UpdatedAt = &value
 	return b
 }
 

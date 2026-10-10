@@ -2451,6 +2451,8 @@ _Appears in:_
 | `endDate` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | endDate is the time at which the lease ends. |  | Optional: \{\} <br /> |
 | `projectID` _string_ | projectID is the ID of the project that owns the lease. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
 | `userID` _string_ | userID is the ID of the user that created the lease. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
+| `createdAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | createdAt shows the date and time when the resource was created. |  | Optional: \{\} <br /> |
+| `updatedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | updatedAt shows the date and time when the resource was updated. |  | Optional: \{\} <br /> |
 | `reservations` _[LeaseReservationStatus](#leasereservationstatus) array_ | reservations are the reservations within the lease. |  | MaxItems: 32 <br />Optional: \{\} <br /> |
 
 

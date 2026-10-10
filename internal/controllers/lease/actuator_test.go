@@ -256,3 +256,47 @@ func TestApplyResourceStatusReservationIDs(t *testing.T) {
 			reservations[1].FlavorID, reservations[1].ServerGroupID)
 	}
 }
+
+func TestApplyResourceStatusDates(t *testing.T) {
+	createdAt := time.Date(2030, 1, 1, 9, 0, 0, 0, time.UTC)
+
+	testCases := []struct {
+		name       string
+		osResource *osResourceT
+		wantDates  bool
+	}{
+		{
+			name:       "Zero dates are not reported",
+			osResource: &osResourceT{},
+		},
+		{
+			name: "Dates are reported",
+			osResource: &osResourceT{
+				StartDate: createdAt.Add(time.Hour),
+				EndDate:   createdAt.Add(2 * time.Hour),
+				CreatedAt: createdAt,
+				UpdatedAt: &createdAt,
+			},
+			wantDates: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			statusApply := orcapplyconfigv1alpha1.LeaseStatus()
+			leaseStatusWriter{}.ApplyResourceStatus(logr.Discard(), tt.osResource, statusApply)
+
+			resource := statusApply.Resource
+			for field, value := range map[string]*metav1.Time{
+				"startDate": resource.StartDate,
+				"endDate":   resource.EndDate,
+				"createdAt": resource.CreatedAt,
+				"updatedAt": resource.UpdatedAt,
+			} {
+				if (value != nil) != tt.wantDates {
+					t.Errorf("%s: expected set: %v, got %v", field, tt.wantDates, value)
+				}
+			}
+		})
+	}
+}

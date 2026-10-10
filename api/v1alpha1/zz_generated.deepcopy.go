@@ -3168,6 +3168,14 @@ func (in *LeaseResourceStatus) DeepCopyInto(out *LeaseResourceStatus) {
 		in, out := &in.EndDate, &out.EndDate
 		*out = (*in).DeepCopy()
 	}
+	if in.CreatedAt != nil {
+		in, out := &in.CreatedAt, &out.CreatedAt
+		*out = (*in).DeepCopy()
+	}
+	if in.UpdatedAt != nil {
+		in, out := &in.UpdatedAt, &out.UpdatedAt
+		*out = (*in).DeepCopy()
+	}
 	if in.Reservations != nil {
 		in, out := &in.Reservations, &out.Reservations
 		*out = make([]LeaseReservationStatus, len(*in))

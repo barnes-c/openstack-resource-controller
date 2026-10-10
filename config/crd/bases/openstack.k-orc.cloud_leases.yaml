@@ -389,6 +389,11 @@ spec:
                 description: resource contains the observed state of the OpenStack
                   resource.
                 properties:
+                  createdAt:
+                    description: createdAt shows the date and time when the resource
+                      was created.
+                    format: date-time
+                    type: string
                   degraded:
                     description: degraded is true if some of the reserved resources
                       are unavailable.
@@ -454,6 +459,11 @@ spec:
                   status:
                     description: status is the status of the lease.
                     maxLength: 255
+                    type: string
+                  updatedAt:
+                    description: updatedAt shows the date and time when the resource
+                      was updated.
+                    format: date-time
                     type: string
                   userID:
                     description: userID is the ID of the user that created the lease.

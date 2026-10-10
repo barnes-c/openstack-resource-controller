@@ -81,10 +81,21 @@ func (leaseStatusWriter) ApplyResourceStatus(log logr.Logger, osResource *osReso
 		WithName(osResource.Name).
 		WithStatus(osResource.Status).
 		WithDegraded(osResource.Degraded).
-		WithStartDate(metav1.NewTime(osResource.StartDate)).
-		WithEndDate(metav1.NewTime(osResource.EndDate)).
 		WithProjectID(osResource.ProjectID).
 		WithUserID(osResource.UserID)
+
+	if !osResource.StartDate.IsZero() {
+		resourceStatus.WithStartDate(metav1.NewTime(osResource.StartDate))
+	}
+	if !osResource.EndDate.IsZero() {
+		resourceStatus.WithEndDate(metav1.NewTime(osResource.EndDate))
+	}
+	if !osResource.CreatedAt.IsZero() {
+		resourceStatus.WithCreatedAt(metav1.NewTime(osResource.CreatedAt))
+	}
+	if osResource.UpdatedAt != nil && !osResource.UpdatedAt.IsZero() {
+		resourceStatus.WithUpdatedAt(metav1.NewTime(*osResource.UpdatedAt))
+	}
 
 	for i := range osResource.Reservations {
 		reservation := &osResource.Reservations[i]

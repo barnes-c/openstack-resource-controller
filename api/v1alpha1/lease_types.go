@@ -202,6 +202,14 @@ type LeaseResourceStatus struct {
 	// +optional
 	UserID string `json:"userID,omitempty"`
 
+	// createdAt shows the date and time when the resource was created.
+	// +optional
+	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
+
+	// updatedAt shows the date and time when the resource was updated.
+	// +optional
+	UpdatedAt *metav1.Time `json:"updatedAt,omitempty"`
+
 	// reservations are the reservations within the lease.
 	// +kubebuilder:validation:MaxItems:=32
 	// +listType=atomic

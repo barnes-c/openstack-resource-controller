@@ -1637,6 +1637,9 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseResourceStatus
   map:
     fields:
+    - name: createdAt
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
     - name: degraded
       type:
         scalar: boolean
@@ -1661,6 +1664,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: status
       type:
         scalar: string
+    - name: updatedAt
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
     - name: userID
       type:
         scalar: string
