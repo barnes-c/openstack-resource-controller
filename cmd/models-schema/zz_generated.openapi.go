@@ -5730,6 +5730,83 @@ func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseReservationStatus
 							Format:      "",
 						},
 					},
+					"missingResources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "missingResources is true if some of the reserved resources are no longer available.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"resourcesChanged": {
+						SchemaProps: spec.SchemaProps{
+							Description: "resourcesChanged is true if some of the reserved resources were replaced.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"min": {
+						SchemaProps: spec.SchemaProps{
+							Description: "min is the smallest number of hosts of a host reservation.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"max": {
+						SchemaProps: spec.SchemaProps{
+							Description: "max is the largest number of hosts of a host reservation.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"hypervisorProperties": {
+						SchemaProps: spec.SchemaProps{
+							Description: "hypervisorProperties filters the candidate hosts of a host reservation on the properties Nova reports.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resourceProperties": {
+						SchemaProps: spec.SchemaProps{
+							Description: "resourceProperties filters the candidate hosts on their extra capabilities.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"amount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "amount is the number of instances of an instance reservation.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"vcpus": {
+						SchemaProps: spec.SchemaProps{
+							Description: "vcpus is the number of virtual CPUs per instance of an instance reservation.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"memoryMB": {
+						SchemaProps: spec.SchemaProps{
+							Description: "memoryMB is the amount of memory per instance of an instance reservation, in megabytes.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"diskGB": {
+						SchemaProps: spec.SchemaProps{
+							Description: "diskGB is the amount of disk per instance of an instance reservation, in gigabytes.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"affinity": {
+						SchemaProps: spec.SchemaProps{
+							Description: "affinity is the placement policy of the instances of an instance reservation: on the same host if true, on distinct hosts if false.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -5740,12 +5817,12 @@ func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseResourceSpec(ref 
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "LeaseResourceSpec contains the desired state of the resource.",
+				Description: "LeaseResourceSpec contains the desired state of the resource.\n\nA lease is only Available while Blazar reports it as ACTIVE. A lease which starts in the future is created immediately but stays Progressing until its start date. A lease which has ended (TERMINATED) or failed (ERROR) can no longer become Available, and is reported as a terminal error.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "name will be the name of the created resource. If not specified, the name of the ORC object will be used.",
+							Description: "name will be the name of the created resource. If not specified, the name of the ORC object will be used, which must then be at most 80 characters long.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

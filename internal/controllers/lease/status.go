@@ -102,13 +102,43 @@ func (leaseStatusWriter) ApplyResourceStatus(log logr.Logger, osResource *osReso
 		reservationStatus := orcapplyconfigv1alpha1.LeaseReservationStatus().
 			WithID(reservation.ID).
 			WithResourceType(reservation.ResourceType).
-			WithStatus(reservation.Status)
-		// Only instance reservations have a flavor and a server group
+			WithStatus(reservation.Status).
+			WithMissingResources(reservation.MissingResources).
+			WithResourcesChanged(reservation.ResourcesChanged)
+
+		// Blazar only returns the fields of the reservation's resource type
 		if reservation.FlavorID != nil {
 			reservationStatus.WithFlavorID(*reservation.FlavorID)
 		}
 		if reservation.ServerGroupID != nil {
 			reservationStatus.WithServerGroupID(*reservation.ServerGroupID)
+		}
+		if reservation.HypervisorProperties != nil {
+			reservationStatus.WithHypervisorProperties(*reservation.HypervisorProperties)
+		}
+		if reservation.ResourceProperties != nil {
+			reservationStatus.WithResourceProperties(*reservation.ResourceProperties)
+		}
+		if reservation.Affinity != nil {
+			reservationStatus.WithAffinity(*reservation.Affinity)
+		}
+		if reservation.Min != nil {
+			reservationStatus.WithMin(int32(*reservation.Min))
+		}
+		if reservation.Max != nil {
+			reservationStatus.WithMax(int32(*reservation.Max))
+		}
+		if reservation.Amount != nil {
+			reservationStatus.WithAmount(int32(*reservation.Amount))
+		}
+		if reservation.VCPUs != nil {
+			reservationStatus.WithVcpus(int32(*reservation.VCPUs))
+		}
+		if reservation.MemoryMB != nil {
+			reservationStatus.WithMemoryMB(int32(*reservation.MemoryMB))
+		}
+		if reservation.DiskGB != nil {
+			reservationStatus.WithDiskGB(int32(*reservation.DiskGB))
 		}
 		resourceStatus.WithReservations(reservationStatus)
 	}

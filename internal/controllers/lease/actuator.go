@@ -27,7 +27,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1"
 	"github.com/k-orc/openstack-resource-controller/v3/internal/controllers/generic/interfaces"
@@ -60,8 +59,7 @@ const leaseDeletingPollingPeriod = 15 * time.Second
 const leaseNameMaxLength = 80
 
 type leaseActuator struct {
-	osClient  osclients.LeaseClient
-	k8sClient client.Client
+	osClient osclients.LeaseClient
 }
 
 var _ createResourceActuator = leaseActuator{}
@@ -272,8 +270,7 @@ func newActuator(ctx context.Context, orcObject *orcv1alpha1.Lease, controller i
 	}
 
 	return leaseActuator{
-		osClient:  osClient,
-		k8sClient: controller.GetK8sClient(),
+		osClient: osClient,
 	}, nil
 }
 

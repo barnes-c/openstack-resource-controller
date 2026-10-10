@@ -224,15 +224,29 @@ func TestListOSResourcesForAdoption(t *testing.T) {
 	}
 }
 
-func TestApplyResourceStatusReservationIDs(t *testing.T) {
+func TestApplyResourceStatusReservations(t *testing.T) {
 	osResource := &osResourceT{
 		Reservations: []leases.Reservation{
-			{ID: "host-reservation", ResourceType: leases.ResourceTypeHost},
 			{
-				ID:            "instance-reservation",
-				ResourceType:  leases.ResourceTypeInstance,
-				FlavorID:      ptr.To("instance-reservation"),
-				ServerGroupID: ptr.To("server-group"),
+				ID:                   "host-reservation",
+				ResourceType:         leases.ResourceTypeHost,
+				Min:                  ptr.To(1),
+				Max:                  ptr.To(2),
+				HypervisorProperties: ptr.To(`[">=", "$vcpus", "4"]`),
+				ResourceProperties:   ptr.To(""),
+			},
+			{
+				ID:                 "instance-reservation",
+				ResourceType:       leases.ResourceTypeInstance,
+				MissingResources:   true,
+				FlavorID:           ptr.To("instance-reservation"),
+				ServerGroupID:      ptr.To("server-group"),
+				Amount:             ptr.To(3),
+				VCPUs:              ptr.To(2),
+				MemoryMB:           ptr.To(4096),
+				DiskGB:             ptr.To(0),
+				Affinity:           ptr.To(false),
+				ResourceProperties: ptr.To(`["==", "$gpu", "a100"]`),
 			},
 		},
 	}
@@ -254,6 +268,27 @@ func TestApplyResourceStatusReservationIDs(t *testing.T) {
 		ptr.Deref(reservations[1].ServerGroupID, "") != "server-group" {
 		t.Errorf("expected flavor and server group for an instance reservation, got %v and %v",
 			reservations[1].FlavorID, reservations[1].ServerGroupID)
+	}
+
+	host, instance := reservations[0], reservations[1]
+	for name, check := range map[string]bool{
+		"host min":                    ptr.Deref(host.Min, 0) == 1,
+		"host max":                    ptr.Deref(host.Max, 0) == 2,
+		"host hypervisorProperties":   ptr.Deref(host.HypervisorProperties, "") == `[">=", "$vcpus", "4"]`,
+		"host has no amount":          host.Amount == nil,
+		"host missingResources":       !ptr.Deref(host.MissingResources, true),
+		"instance amount":             ptr.Deref(instance.Amount, 0) == 3,
+		"instance vcpus":              ptr.Deref(instance.Vcpus, 0) == 2,
+		"instance memoryMB":           ptr.Deref(instance.MemoryMB, 0) == 4096,
+		"instance diskGB of 0":        instance.DiskGB != nil && *instance.DiskGB == 0,
+		"instance affinity":           instance.Affinity != nil && !*instance.Affinity,
+		"instance resourceProperties": ptr.Deref(instance.ResourceProperties, "") == `["==", "$gpu", "a100"]`,
+		"instance missingResources":   ptr.Deref(instance.MissingResources, false),
+		"instance has no min":         instance.Min == nil,
+	} {
+		if !check {
+			t.Errorf("unexpected status for %s", name)
+		}
 	}
 }
 

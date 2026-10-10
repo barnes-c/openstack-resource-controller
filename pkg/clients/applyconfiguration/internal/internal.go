@@ -1601,21 +1601,54 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseReservationStatus
   map:
     fields:
+    - name: affinity
+      type:
+        scalar: boolean
+    - name: amount
+      type:
+        scalar: numeric
+    - name: diskGB
+      type:
+        scalar: numeric
     - name: flavorID
+      type:
+        scalar: string
+    - name: hypervisorProperties
       type:
         scalar: string
     - name: id
       type:
         scalar: string
+    - name: max
+      type:
+        scalar: numeric
+    - name: memoryMB
+      type:
+        scalar: numeric
+    - name: min
+      type:
+        scalar: numeric
+    - name: missingResources
+      type:
+        scalar: boolean
+    - name: resourceProperties
+      type:
+        scalar: string
     - name: resourceType
       type:
         scalar: string
+    - name: resourcesChanged
+      type:
+        scalar: boolean
     - name: serverGroupID
       type:
         scalar: string
     - name: status
       type:
         scalar: string
+    - name: vcpus
+      type:
+        scalar: numeric
 - name: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseResourceSpec
   map:
     fields:

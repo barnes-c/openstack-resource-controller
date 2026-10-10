@@ -10,6 +10,16 @@ status:
     degraded: false
     startDate: "2095-01-01T10:00:00Z"
     endDate: "2095-01-01T11:00:00Z"
+  # The lease has not started, so it is not available yet
+  conditions:
+  - type: Available
+    message: Waiting for OpenStack resource to be ready
+    status: "False"
+    reason: Progressing
+  - type: Progressing
+    message: Waiting for OpenStack resource to be ready
+    status: "True"
+    reason: Progressing
 ---
 apiVersion: kuttl.dev/v1beta1
 kind: TestAssert
@@ -25,9 +35,13 @@ assertAll:
     - celExpr: "has(lease.status.resource.createdAt)"
     - celExpr: "size(lease.status.resource.reservations) == 1"
     - celExpr: "lease.status.resource.reservations[0].resourceType == 'virtual:instance'"
+    - celExpr: "lease.status.resource.reservations[0].amount == 1"
+    - celExpr: "lease.status.resource.reservations[0].vcpus == 1"
+    - celExpr: "lease.status.resource.reservations[0].memoryMB == 128"
+    - celExpr: "lease.status.resource.reservations[0].diskGB == 1"
+    - celExpr: "lease.status.resource.reservations[0].affinity == false"
+    - celExpr: "lease.status.resource.reservations[0].resourceProperties == '[\"==\", \"$orc\", \"e2e\"]'"
     - celExpr: "lease.status.resource.reservations[0].flavorID == lease.status.resource.reservations[0].id"
     # affinity: false makes Blazar create an anti-affinity server group
     - celExpr: "lease.status.resource.reservations[0].serverGroupID != ''"
-    # The lease has not started, so it is not available yet
-    - celExpr: "lease.status.conditions.exists(c, c.type == 'Available' && c.status == 'False')"
-    - celExpr: "lease.status.conditions.exists(c, c.type == 'Progressing' && c.status == 'True')"
+    - celExpr: "!has(lease.status.resource.reservations[0].min)"

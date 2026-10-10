@@ -153,7 +153,8 @@ spec:
                   name:
                     description: |-
                       name will be the name of the created resource. If not specified, the
-                      name of the ORC object will be used.
+                      name of the ORC object will be used, which must then be at most 80
+                      characters long.
                     maxLength: 80
                     minLength: 1
                     type: string
@@ -419,6 +420,22 @@ spec:
                         LeaseReservationStatus represents the observed state of a reservation
                         within a lease.
                       properties:
+                        affinity:
+                          description: |-
+                            affinity is the placement policy of the instances of an instance
+                            reservation: on the same host if true, on distinct hosts if false.
+                          type: boolean
+                        amount:
+                          description: amount is the number of instances of an instance
+                            reservation.
+                          format: int32
+                          type: integer
+                        diskGB:
+                          description: |-
+                            diskGB is the amount of disk per instance of an instance reservation,
+                            in gigabytes.
+                          format: int32
+                          type: integer
                         flavorID:
                           description: |-
                             flavorID is the ID of the flavor Blazar created for an instance
@@ -426,11 +443,44 @@ spec:
                             reservation.
                           maxLength: 36
                           type: string
+                        hypervisorProperties:
+                          description: |-
+                            hypervisorProperties filters the candidate hosts of a host reservation
+                            on the properties Nova reports.
+                          maxLength: 4096
+                          type: string
                         id:
                           description: |-
                             id is the ID of the reservation. For host reservations it is passed to
                             Nova as the `reservation` scheduler hint.
                           maxLength: 36
+                          type: string
+                        max:
+                          description: max is the largest number of hosts of a host
+                            reservation.
+                          format: int32
+                          type: integer
+                        memoryMB:
+                          description: |-
+                            memoryMB is the amount of memory per instance of an instance
+                            reservation, in megabytes.
+                          format: int32
+                          type: integer
+                        min:
+                          description: min is the smallest number of hosts of a host
+                            reservation.
+                          format: int32
+                          type: integer
+                        missingResources:
+                          description: |-
+                            missingResources is true if some of the reserved resources are no
+                            longer available.
+                          type: boolean
+                        resourceProperties:
+                          description: |-
+                            resourceProperties filters the candidate hosts on their extra
+                            capabilities.
+                          maxLength: 4096
                           type: string
                         resourceType:
                           description: |-
@@ -438,6 +488,11 @@ spec:
                             or `virtual:instance`.
                           maxLength: 66
                           type: string
+                        resourcesChanged:
+                          description: |-
+                            resourcesChanged is true if some of the reserved resources were
+                            replaced.
+                          type: boolean
                         serverGroupID:
                           description: |-
                             serverGroupID is the ID of the server group Blazar created for an
@@ -448,6 +503,12 @@ spec:
                           description: status is the status of the reservation.
                           maxLength: 13
                           type: string
+                        vcpus:
+                          description: |-
+                            vcpus is the number of virtual CPUs per instance of an instance
+                            reservation.
+                          format: int32
+                          type: integer
                       type: object
                     maxItems: 32
                     type: array

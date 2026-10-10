@@ -17,6 +17,9 @@ resourceRefs:
 assertAll:
     - celExpr: "imported.status.id == external.status.id"
     - celExpr: "imported.status.id != trap.status.id"
+    - celExpr: "size(imported.status.resource.reservations) == 1"
+    - celExpr: "imported.status.resource.reservations[0].resourceType == 'virtual:instance'"
+    - celExpr: "imported.status.resource.reservations[0].amount == 1"
 ---
 apiVersion: openstack.k-orc.cloud/v1alpha1
 kind: Lease

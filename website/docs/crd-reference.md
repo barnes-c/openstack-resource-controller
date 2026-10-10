@@ -484,7 +484,8 @@ _Appears in:_
 
 _Underlying type:_ _string_
 
-
+BlazarName is the name of a Blazar resource. 80 is the length of the name
+column of Blazar's leases table.
 
 _Validation:_
 - MaxLength: 80
@@ -2410,6 +2411,17 @@ _Appears in:_
 | `status` _string_ | status is the status of the reservation. |  | MaxLength: 13 <br />Optional: \{\} <br /> |
 | `flavorID` _string_ | flavorID is the ID of the flavor Blazar created for an instance<br />reservation. Instances must be created with this flavor to consume the<br />reservation. |  | MaxLength: 36 <br />Optional: \{\} <br /> |
 | `serverGroupID` _string_ | serverGroupID is the ID of the server group Blazar created for an<br />instance reservation. |  | MaxLength: 36 <br />Optional: \{\} <br /> |
+| `missingResources` _boolean_ | missingResources is true if some of the reserved resources are no<br />longer available. |  | Optional: \{\} <br /> |
+| `resourcesChanged` _boolean_ | resourcesChanged is true if some of the reserved resources were<br />replaced. |  | Optional: \{\} <br /> |
+| `min` _integer_ | min is the smallest number of hosts of a host reservation. |  | Optional: \{\} <br /> |
+| `max` _integer_ | max is the largest number of hosts of a host reservation. |  | Optional: \{\} <br /> |
+| `hypervisorProperties` _string_ | hypervisorProperties filters the candidate hosts of a host reservation<br />on the properties Nova reports. |  | MaxLength: 4096 <br />Optional: \{\} <br /> |
+| `resourceProperties` _string_ | resourceProperties filters the candidate hosts on their extra<br />capabilities. |  | MaxLength: 4096 <br />Optional: \{\} <br /> |
+| `amount` _integer_ | amount is the number of instances of an instance reservation. |  | Optional: \{\} <br /> |
+| `vcpus` _integer_ | vcpus is the number of virtual CPUs per instance of an instance<br />reservation. |  | Optional: \{\} <br /> |
+| `memoryMB` _integer_ | memoryMB is the amount of memory per instance of an instance<br />reservation, in megabytes. |  | Optional: \{\} <br /> |
+| `diskGB` _integer_ | diskGB is the amount of disk per instance of an instance reservation,<br />in gigabytes. |  | Optional: \{\} <br /> |
+| `affinity` _boolean_ | affinity is the placement policy of the instances of an instance<br />reservation: on the same host if true, on distinct hosts if false. |  | Optional: \{\} <br /> |
 
 
 #### LeaseResourceSpec
@@ -2418,6 +2430,11 @@ _Appears in:_
 
 LeaseResourceSpec contains the desired state of the resource.
 
+A lease is only Available while Blazar reports it as ACTIVE. A lease which
+starts in the future is created immediately but stays Progressing until its
+start date. A lease which has ended (TERMINATED) or failed (ERROR) can no
+longer become Available, and is reported as a terminal error.
+
 
 
 _Appears in:_
@@ -2425,7 +2442,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `name` _[BlazarName](#blazarname)_ | name will be the name of the created resource. If not specified, the<br />name of the ORC object will be used. |  | MaxLength: 80 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+| `name` _[BlazarName](#blazarname)_ | name will be the name of the created resource. If not specified, the<br />name of the ORC object will be used, which must then be at most 80<br />characters long. |  | MaxLength: 80 <br />MinLength: 1 <br />Optional: \{\} <br /> |
 | `startDate` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | startDate is the time at which the lease starts. If not specified, the<br />lease starts as soon as it is created. Blazar truncates it to the<br />minute. |  | Optional: \{\} <br /> |
 | `endDate` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#time-v1-meta)_ | endDate is the time at which the lease ends. Blazar truncates it to the<br />minute. |  | Required: \{\} <br /> |
 | `reservations` _[LeaseReservation](#leasereservation) array_ | reservations are the resources reserved for the duration of the lease. |  | MaxItems: 32 <br />MinItems: 1 <br />Required: \{\} <br /> |

@@ -7,11 +7,14 @@ status:
   resource:
     name: lease-create-minimal
     status: ACTIVE
+    degraded: false
   conditions:
   - type: Available
+    message: OpenStack resource is available
     status: "True"
     reason: Success
   - type: Progressing
+    message: OpenStack resource is up to date
     status: "False"
     reason: Success
 ---
@@ -24,7 +27,21 @@ resourceRefs:
       ref: lease
 assertAll:
     - celExpr: "lease.status.id != ''"
+    - celExpr: "lease.status.resource.projectID != ''"
+    - celExpr: "lease.status.resource.userID != ''"
+    - celExpr: "has(lease.status.resource.startDate)"
+    - celExpr: "has(lease.status.resource.endDate)"
+    - celExpr: "has(lease.status.resource.createdAt)"
     - celExpr: "size(lease.status.resource.reservations) == 1"
     - celExpr: "lease.status.resource.reservations[0].resourceType == 'virtual:instance'"
+    - celExpr: "lease.status.resource.reservations[0].amount == 1"
+    - celExpr: "lease.status.resource.reservations[0].vcpus == 1"
+    - celExpr: "lease.status.resource.reservations[0].memoryMB == 128"
+    - celExpr: "lease.status.resource.reservations[0].diskGB == 1"
     # Blazar names the reserved flavor after the reservation
     - celExpr: "lease.status.resource.reservations[0].flavorID == lease.status.resource.reservations[0].id"
+    # No affinity was requested, so Blazar creates no server group
+    - celExpr: "!has(lease.status.resource.reservations[0].affinity)"
+    - celExpr: "!has(lease.status.resource.reservations[0].serverGroupID)"
+    # Host reservation fields are not set on an instance reservation
+    - celExpr: "!has(lease.status.resource.reservations[0].min)"

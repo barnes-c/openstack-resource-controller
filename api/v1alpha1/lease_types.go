@@ -99,11 +99,17 @@ type LeaseReservation struct {
 }
 
 // LeaseResourceSpec contains the desired state of the resource.
+//
+// A lease is only Available while Blazar reports it as ACTIVE. A lease which
+// starts in the future is created immediately but stays Progressing until its
+// start date. A lease which has ended (TERMINATED) or failed (ERROR) can no
+// longer become Available, and is reported as a terminal error.
 // +kubebuilder:validation:XValidation:rule="self == oldSelf",message="LeaseResourceSpec is immutable"
 // +kubebuilder:validation:XValidation:rule="!has(self.startDate) || timestamp(self.endDate) > timestamp(self.startDate)",message="endDate must be later than startDate"
 type LeaseResourceSpec struct {
 	// name will be the name of the created resource. If not specified, the
-	// name of the ORC object will be used.
+	// name of the ORC object will be used, which must then be at most 80
+	// characters long.
 	// +optional
 	Name *BlazarName `json:"name,omitempty"`
 
@@ -166,6 +172,60 @@ type LeaseReservationStatus struct {
 	// +kubebuilder:validation:MaxLength=36
 	// +optional
 	ServerGroupID string `json:"serverGroupID,omitempty"`
+
+	// missingResources is true if some of the reserved resources are no
+	// longer available.
+	// +optional
+	MissingResources *bool `json:"missingResources,omitempty"`
+
+	// resourcesChanged is true if some of the reserved resources were
+	// replaced.
+	// +optional
+	ResourcesChanged *bool `json:"resourcesChanged,omitempty"`
+
+	// min is the smallest number of hosts of a host reservation.
+	// +optional
+	Min *int32 `json:"min,omitempty"`
+
+	// max is the largest number of hosts of a host reservation.
+	// +optional
+	Max *int32 `json:"max,omitempty"`
+
+	// hypervisorProperties filters the candidate hosts of a host reservation
+	// on the properties Nova reports.
+	// +kubebuilder:validation:MaxLength=4096
+	// +optional
+	HypervisorProperties string `json:"hypervisorProperties,omitempty"`
+
+	// resourceProperties filters the candidate hosts on their extra
+	// capabilities.
+	// +kubebuilder:validation:MaxLength=4096
+	// +optional
+	ResourceProperties string `json:"resourceProperties,omitempty"`
+
+	// amount is the number of instances of an instance reservation.
+	// +optional
+	Amount *int32 `json:"amount,omitempty"`
+
+	// vcpus is the number of virtual CPUs per instance of an instance
+	// reservation.
+	// +optional
+	Vcpus *int32 `json:"vcpus,omitempty"`
+
+	// memoryMB is the amount of memory per instance of an instance
+	// reservation, in megabytes.
+	// +optional
+	MemoryMB *int32 `json:"memoryMB,omitempty"`
+
+	// diskGB is the amount of disk per instance of an instance reservation,
+	// in gigabytes.
+	// +optional
+	DiskGB *int32 `json:"diskGB,omitempty"`
+
+	// affinity is the placement policy of the instances of an instance
+	// reservation: on the same host if true, on distinct hosts if false.
+	// +optional
+	Affinity *bool `json:"affinity,omitempty"`
 }
 
 // LeaseResourceStatus represents the observed state of the resource.
