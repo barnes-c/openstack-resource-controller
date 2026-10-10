@@ -1,0 +1,17 @@
+---
+apiVersion: openstack.k-orc.cloud/v1alpha1
+kind: Lease
+metadata:
+  name: lease-dependency
+status:
+  resource:
+    status: PENDING
+  conditions:
+    - type: Available
+      message: Waiting for OpenStack resource to be ready
+      status: "False"
+      reason: Progressing
+    - type: Progressing
+      message: Waiting for OpenStack resource to be ready
+      status: "True"
+      reason: Progressing

@@ -193,6 +193,10 @@ func (s *providerScope) NewKeyPairClient() (clients.KeyPairClient, error) {
 	return clients.NewKeyPairClient(s.providerClient, s.providerClientOpts)
 }
 
+func (s *providerScope) NewLeaseClient() (clients.LeaseClient, error) {
+	return clients.NewLeaseClient(s.providerClient, s.providerClientOpts)
+}
+
 func (s *providerScope) NewGroupClient() (clients.GroupClient, error) {
 	return clients.NewGroupClient(s.providerClient, s.providerClientOpts)
 }

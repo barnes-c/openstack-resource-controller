@@ -54,6 +54,7 @@ type MockScopeFactory struct {
 	VolumeTypeClient            *mock.MockVolumeTypeClient
 	ShareNetworkClient          *mock.MockShareNetworkClient
 	LimitClient                 *mock.MockLimitClient
+	LeaseClient                 *mock.MockLeaseClient
 
 	clientScopeCreateError error
 }
@@ -79,6 +80,7 @@ func NewMockScopeFactory(mockCtrl *gomock.Controller) *MockScopeFactory {
 	volumeClient := mock.NewMockVolumeClient(mockCtrl)
 	volumetypeClient := mock.NewMockVolumeTypeClient(mockCtrl)
 	limitClient := mock.NewMockLimitClient(mockCtrl)
+	leaseClient := mock.NewMockLeaseClient(mockCtrl)
 
 	return &MockScopeFactory{
 		AddressScope:                addressScope,
@@ -101,6 +103,7 @@ func NewMockScopeFactory(mockCtrl *gomock.Controller) *MockScopeFactory {
 		VolumeClient:                volumeClient,
 		VolumeTypeClient:            volumetypeClient,
 		LimitClient:                 limitClient,
+		LeaseClient:                 leaseClient,
 	}
 }
 
@@ -161,6 +164,10 @@ func (f *MockScopeFactory) NewShareNetworkClient() (osclients.ShareNetworkClient
 
 func (f *MockScopeFactory) NewKeyPairClient() (osclients.KeyPairClient, error) {
 	return f.KeyPairClient, nil
+}
+
+func (f *MockScopeFactory) NewLeaseClient() (osclients.LeaseClient, error) {
+	return f.LeaseClient, nil
 }
 
 func (f *MockScopeFactory) NewGroupClient() (osclients.GroupClient, error) {

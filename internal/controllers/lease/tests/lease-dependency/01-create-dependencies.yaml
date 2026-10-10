@@ -1,0 +1,21 @@
+---
+# Import the flavor DevStack provides, as the server tests do. Creating a
+# flavor requires admin credentials.
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: |
+      cat <<EOT | kubectl apply -n $NAMESPACE -f -
+      apiVersion: openstack.k-orc.cloud/v1alpha1
+      kind: Flavor
+      metadata:
+        name: lease-dependency
+      spec:
+        cloudCredentialsRef:
+          cloudName: openstack-admin
+          secretName: openstack-clouds
+        managementPolicy: unmanaged
+        import:
+          filter:
+            name: ${E2E_KUTTL_FLAVOR}
+      EOT
