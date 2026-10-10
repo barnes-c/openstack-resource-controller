@@ -218,6 +218,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.LeaseApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("LeaseFilter"):
 		return &apiv1alpha1.LeaseFilterApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("LeaseFlavorInstanceReservation"):
+		return &apiv1alpha1.LeaseFlavorInstanceReservationApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("LeaseHostReservation"):
 		return &apiv1alpha1.LeaseHostReservationApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("LeaseImport"):

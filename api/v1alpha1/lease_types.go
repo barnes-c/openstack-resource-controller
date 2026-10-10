@@ -85,9 +85,25 @@ type LeaseInstanceReservation struct {
 	ResourceProperties *string `json:"resourceProperties,omitempty"`
 }
 
+// LeaseFlavorInstanceReservation reserves capacity for instances of an
+// existing flavor for the duration of the lease.
+type LeaseFlavorInstanceReservation struct {
+	// amount is the number of instances to reserve capacity for.
+	// +kubebuilder:validation:Minimum:=1
+	// +required
+	Amount int32 `json:"amount,omitempty"`
+
+	// flavorRef is a reference to the ORC Flavor to reserve instances of.
+	// Blazar derives the size and the resource properties of the
+	// reservation from the flavor when the lease is created.
+	// +orc:kustomize:ref=Flavor
+	// +required
+	FlavorRef KubernetesNameRef `json:"flavorRef,omitempty"`
+}
+
 // LeaseReservation is a single reservation within a lease. Exactly one of
-// host or instance must be specified.
-// +kubebuilder:validation:XValidation:rule="has(self.host) != has(self.instance)",message="exactly one of host or instance must be set"
+// host, instance or flavorInstance must be specified.
+// +kubebuilder:validation:XValidation:rule="[has(self.host), has(self.instance), has(self.flavorInstance)].filter(x, x).size() == 1",message="exactly one of host, instance or flavorInstance must be set"
 type LeaseReservation struct {
 	// host reserves whole compute hosts.
 	// +optional
@@ -96,6 +112,10 @@ type LeaseReservation struct {
 	// instance reserves capacity for instances of a given size.
 	// +optional
 	Instance *LeaseInstanceReservation `json:"instance,omitempty"`
+
+	// flavorInstance reserves capacity for instances of an existing flavor.
+	// +optional
+	FlavorInstance *LeaseFlavorInstanceReservation `json:"flavorInstance,omitempty"`
 }
 
 // LeaseResourceSpec contains the desired state of the resource.
@@ -149,8 +169,8 @@ type LeaseReservationStatus struct {
 	// +optional
 	ID string `json:"id,omitempty"`
 
-	// resourceType is the type of resource reserved, e.g. `physical:host`
-	// or `virtual:instance`.
+	// resourceType is the type of resource reserved: `physical:host`,
+	// `virtual:instance` or `flavor:instance`.
 	// +kubebuilder:validation:MaxLength=66
 	// +optional
 	ResourceType string `json:"resourceType,omitempty"`

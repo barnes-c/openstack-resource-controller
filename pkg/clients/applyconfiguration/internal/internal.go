@@ -1544,6 +1544,15 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: name
       type:
         scalar: string
+- name: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseFlavorInstanceReservation
+  map:
+    fields:
+    - name: amount
+      type:
+        scalar: numeric
+    - name: flavorRef
+      type:
+        scalar: string
 - name: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseHostReservation
   map:
     fields:
@@ -1592,6 +1601,9 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseReservation
   map:
     fields:
+    - name: flavorInstance
+      type:
+        namedType: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseFlavorInstanceReservation
     - name: host
       type:
         namedType: com.github.k-orc.openstack-resource-controller.v3.api.v1alpha1.LeaseHostReservation

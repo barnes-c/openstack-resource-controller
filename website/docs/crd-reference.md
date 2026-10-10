@@ -2239,6 +2239,7 @@ _Appears in:_
 - [GroupFilter](#groupfilter)
 - [GroupResourceSpec](#groupresourcespec)
 - [HostID](#hostid)
+- [LeaseFlavorInstanceReservation](#leaseflavorinstancereservation)
 - [LimitFilter](#limitfilter)
 - [LimitResourceSpec](#limitresourcespec)
 - [NetworkFilter](#networkfilter)
@@ -2312,6 +2313,24 @@ _Appears in:_
 | `name` _[BlazarName](#blazarname)_ | name of the existing resource |  | MaxLength: 80 <br />MinLength: 1 <br />Optional: \{\} <br /> |
 
 
+#### LeaseFlavorInstanceReservation
+
+
+
+LeaseFlavorInstanceReservation reserves capacity for instances of an
+existing flavor for the duration of the lease.
+
+
+
+_Appears in:_
+- [LeaseReservation](#leasereservation)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `amount` _integer_ | amount is the number of instances to reserve capacity for. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `flavorRef` _[KubernetesNameRef](#kubernetesnameref)_ | flavorRef is a reference to the ORC Flavor to reserve instances of.<br />Blazar derives the size and the resource properties of the<br />reservation from the flavor when the lease is created. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
+
+
 #### LeaseHostReservation
 
 
@@ -2379,7 +2398,7 @@ _Appears in:_
 
 
 LeaseReservation is a single reservation within a lease. Exactly one of
-host or instance must be specified.
+host, instance or flavorInstance must be specified.
 
 
 
@@ -2390,6 +2409,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `host` _[LeaseHostReservation](#leasehostreservation)_ | host reserves whole compute hosts. |  | Optional: \{\} <br /> |
 | `instance` _[LeaseInstanceReservation](#leaseinstancereservation)_ | instance reserves capacity for instances of a given size. |  | Optional: \{\} <br /> |
+| `flavorInstance` _[LeaseFlavorInstanceReservation](#leaseflavorinstancereservation)_ | flavorInstance reserves capacity for instances of an existing flavor. |  | Optional: \{\} <br /> |
 
 
 #### LeaseReservationStatus
@@ -2407,7 +2427,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `id` _string_ | id is the ID of the reservation. For host reservations it is passed to<br />Nova as the `reservation` scheduler hint. |  | MaxLength: 36 <br />Optional: \{\} <br /> |
-| `resourceType` _string_ | resourceType is the type of resource reserved, e.g. `physical:host`<br />or `virtual:instance`. |  | MaxLength: 66 <br />Optional: \{\} <br /> |
+| `resourceType` _string_ | resourceType is the type of resource reserved: `physical:host`,<br />`virtual:instance` or `flavor:instance`. |  | MaxLength: 66 <br />Optional: \{\} <br /> |
 | `status` _string_ | status is the status of the reservation. |  | MaxLength: 13 <br />Optional: \{\} <br /> |
 | `flavorID` _string_ | flavorID is the ID of the flavor Blazar created for an instance<br />reservation. Instances must be created with this flavor to consume the<br />reservation. |  | MaxLength: 36 <br />Optional: \{\} <br /> |
 | `serverGroupID` _string_ | serverGroupID is the ID of the server group Blazar created for an<br />instance reservation. |  | MaxLength: 36 <br />Optional: \{\} <br /> |

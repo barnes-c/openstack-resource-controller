@@ -164,8 +164,30 @@ spec:
                     items:
                       description: |-
                         LeaseReservation is a single reservation within a lease. Exactly one of
-                        host or instance must be specified.
+                        host, instance or flavorInstance must be specified.
                       properties:
+                        flavorInstance:
+                          description: flavorInstance reserves capacity for instances
+                            of an existing flavor.
+                          properties:
+                            amount:
+                              description: amount is the number of instances to reserve
+                                capacity for.
+                              format: int32
+                              minimum: 1
+                              type: integer
+                            flavorRef:
+                              description: |-
+                                flavorRef is a reference to the ORC Flavor to reserve instances of.
+                                Blazar derives the size and the resource properties of the
+                                reservation from the flavor when the lease is created.
+                              maxLength: 253
+                              minLength: 1
+                              type: string
+                          required:
+                          - amount
+                          - flavorRef
+                          type: object
                         host:
                           description: host reserves whole compute hosts.
                           properties:
@@ -249,8 +271,10 @@ spec:
                           type: object
                       type: object
                       x-kubernetes-validations:
-                      - message: exactly one of host or instance must be set
-                        rule: has(self.host) != has(self.instance)
+                      - message: exactly one of host, instance or flavorInstance must
+                          be set
+                        rule: '[has(self.host), has(self.instance), has(self.flavorInstance)].filter(x,
+                          x).size() == 1'
                     maxItems: 32
                     minItems: 1
                     type: array
@@ -484,8 +508,8 @@ spec:
                           type: string
                         resourceType:
                           description: |-
-                            resourceType is the type of resource reserved, e.g. `physical:host`
-                            or `virtual:instance`.
+                            resourceType is the type of resource reserved: `physical:host`,
+                            `virtual:instance` or `flavor:instance`.
                           maxLength: 66
                           type: string
                         resourcesChanged:

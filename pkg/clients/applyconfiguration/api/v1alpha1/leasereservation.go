@@ -21,8 +21,9 @@ package v1alpha1
 // LeaseReservationApplyConfiguration represents a declarative configuration of the LeaseReservation type for use
 // with apply.
 type LeaseReservationApplyConfiguration struct {
-	Host     *LeaseHostReservationApplyConfiguration     `json:"host,omitempty"`
-	Instance *LeaseInstanceReservationApplyConfiguration `json:"instance,omitempty"`
+	Host           *LeaseHostReservationApplyConfiguration           `json:"host,omitempty"`
+	Instance       *LeaseInstanceReservationApplyConfiguration       `json:"instance,omitempty"`
+	FlavorInstance *LeaseFlavorInstanceReservationApplyConfiguration `json:"flavorInstance,omitempty"`
 }
 
 // LeaseReservationApplyConfiguration constructs a declarative configuration of the LeaseReservation type for use with
@@ -44,5 +45,13 @@ func (b *LeaseReservationApplyConfiguration) WithHost(value *LeaseHostReservatio
 // If called multiple times, the Instance field is set to the value of the last call.
 func (b *LeaseReservationApplyConfiguration) WithInstance(value *LeaseInstanceReservationApplyConfiguration) *LeaseReservationApplyConfiguration {
 	b.Instance = value
+	return b
+}
+
+// WithFlavorInstance sets the FlavorInstance field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the FlavorInstance field is set to the value of the last call.
+func (b *LeaseReservationApplyConfiguration) WithFlavorInstance(value *LeaseFlavorInstanceReservationApplyConfiguration) *LeaseReservationApplyConfiguration {
+	b.FlavorInstance = value
 	return b
 }

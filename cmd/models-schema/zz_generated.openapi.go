@@ -132,6 +132,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.KeyPairStatus":                         schema_openstack_resource_controller_v3_api_v1alpha1_KeyPairStatus(ref),
 		"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.Lease":                                 schema_openstack_resource_controller_v3_api_v1alpha1_Lease(ref),
 		"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseFilter":                           schema_openstack_resource_controller_v3_api_v1alpha1_LeaseFilter(ref),
+		"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseFlavorInstanceReservation":        schema_openstack_resource_controller_v3_api_v1alpha1_LeaseFlavorInstanceReservation(ref),
 		"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseHostReservation":                  schema_openstack_resource_controller_v3_api_v1alpha1_LeaseHostReservation(ref),
 		"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseImport":                           schema_openstack_resource_controller_v3_api_v1alpha1_LeaseImport(ref),
 		"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseInstanceReservation":              schema_openstack_resource_controller_v3_api_v1alpha1_LeaseInstanceReservation(ref),
@@ -5484,6 +5485,34 @@ func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseFilter(ref common
 	}
 }
 
+func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseFlavorInstanceReservation(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LeaseFlavorInstanceReservation reserves capacity for instances of an existing flavor for the duration of the lease.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"amount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "amount is the number of instances to reserve capacity for.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"flavorRef": {
+						SchemaProps: spec.SchemaProps{
+							Description: "flavorRef is a reference to the ORC Flavor to reserve instances of. Blazar derives the size and the resource properties of the reservation from the flavor when the lease is created.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"amount", "flavorRef"},
+			},
+		},
+	}
+}
+
 func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseHostReservation(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -5665,7 +5694,7 @@ func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseReservation(ref c
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "LeaseReservation is a single reservation within a lease. Exactly one of host or instance must be specified.",
+				Description: "LeaseReservation is a single reservation within a lease. Exactly one of host, instance or flavorInstance must be specified.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"host": {
@@ -5680,11 +5709,17 @@ func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseReservation(ref c
 							Ref:         ref("github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseInstanceReservation"),
 						},
 					},
+					"flavorInstance": {
+						SchemaProps: spec.SchemaProps{
+							Description: "flavorInstance reserves capacity for instances of an existing flavor.",
+							Ref:         ref("github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseFlavorInstanceReservation"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseHostReservation", "github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseInstanceReservation"},
+			"github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseFlavorInstanceReservation", "github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseHostReservation", "github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1.LeaseInstanceReservation"},
 	}
 }
 
@@ -5704,7 +5739,7 @@ func schema_openstack_resource_controller_v3_api_v1alpha1_LeaseReservationStatus
 					},
 					"resourceType": {
 						SchemaProps: spec.SchemaProps{
-							Description: "resourceType is the type of resource reserved, e.g. `physical:host` or `virtual:instance`.",
+							Description: "resourceType is the type of resource reserved: `physical:host`, `virtual:instance` or `flavor:instance`.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

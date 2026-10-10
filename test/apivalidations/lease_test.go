@@ -59,6 +59,12 @@ func testLeaseInstanceReservation() *applyconfigv1alpha1.LeaseReservationApplyCo
 			WithAmount(1).WithVcpus(1).WithMemoryMB(512).WithDiskGB(0))
 }
 
+func testLeaseFlavorInstanceReservation() *applyconfigv1alpha1.LeaseReservationApplyConfiguration {
+	return applyconfigv1alpha1.LeaseReservation().
+		WithFlavorInstance(applyconfigv1alpha1.LeaseFlavorInstanceReservation().
+			WithAmount(1).WithFlavorRef("flavor"))
+}
+
 func testLeaseResource() *applyconfigv1alpha1.LeaseResourceSpecApplyConfiguration {
 	return applyconfigv1alpha1.LeaseResourceSpec().
 		WithEndDate(leaseEndDate).
@@ -118,13 +124,13 @@ var _ = Describe("ORC Lease API validations", func() {
 		},
 	})
 
-	It("should permit a valid host and instance reservation", func(ctx context.Context) {
+	It("should permit valid host, instance and flavor instance reservations", func(ctx context.Context) {
 		lease := leaseStub(namespace)
 		patch := baseLeasePatch(lease)
 		patch.Spec.WithResource(applyconfigv1alpha1.LeaseResourceSpec().
 			WithStartDate(leaseStartDate).
 			WithEndDate(leaseEndDate).
-			WithReservations(testLeaseHostReservation(), testLeaseInstanceReservation()))
+			WithReservations(testLeaseHostReservation(), testLeaseInstanceReservation(), testLeaseFlavorInstanceReservation()))
 		Expect(applyObj(ctx, lease, patch)).To(Succeed())
 	})
 
@@ -168,13 +174,18 @@ var _ = Describe("ORC Lease API validations", func() {
 			patch.Spec.WithResource(applyconfigv1alpha1.LeaseResourceSpec().
 				WithEndDate(leaseEndDate).
 				WithReservations(reservation))
-			Expect(applyObj(ctx, lease, patch)).To(MatchError(ContainSubstring("exactly one of host or instance must be set")))
+			Expect(applyObj(ctx, lease, patch)).To(MatchError(ContainSubstring("exactly one of host, instance or flavorInstance must be set")))
 		},
-		Entry("neither", applyconfigv1alpha1.LeaseReservation()),
-		Entry("both", applyconfigv1alpha1.LeaseReservation().
+		Entry("none", applyconfigv1alpha1.LeaseReservation()),
+		Entry("host and instance", applyconfigv1alpha1.LeaseReservation().
 			WithHost(applyconfigv1alpha1.LeaseHostReservation().WithMin(1).WithMax(1)).
 			WithInstance(applyconfigv1alpha1.LeaseInstanceReservation().
 				WithAmount(1).WithVcpus(1).WithMemoryMB(512).WithDiskGB(0))),
+		Entry("instance and flavor instance", applyconfigv1alpha1.LeaseReservation().
+			WithInstance(applyconfigv1alpha1.LeaseInstanceReservation().
+				WithAmount(1).WithVcpus(1).WithMemoryMB(512).WithDiskGB(0)).
+			WithFlavorInstance(applyconfigv1alpha1.LeaseFlavorInstanceReservation().
+				WithAmount(1).WithFlavorRef("flavor"))),
 	)
 
 	It("should reject a host reservation with max lower than min", func(ctx context.Context) {
@@ -204,7 +215,20 @@ var _ = Describe("ORC Lease API validations", func() {
 		Entry("instance diskGB", applyconfigv1alpha1.LeaseReservation().
 			WithInstance(applyconfigv1alpha1.LeaseInstanceReservation().
 				WithAmount(1).WithVcpus(1).WithMemoryMB(512).WithDiskGB(-1)), "diskGB"),
+		Entry("flavor instance amount", applyconfigv1alpha1.LeaseReservation().
+			WithFlavorInstance(applyconfigv1alpha1.LeaseFlavorInstanceReservation().
+				WithAmount(0).WithFlavorRef("flavor")), "amount"),
 	)
+
+	It("should reject a flavor instance reservation without flavorRef", func(ctx context.Context) {
+		lease := leaseStub(namespace)
+		patch := baseLeasePatch(lease)
+		patch.Spec.WithResource(applyconfigv1alpha1.LeaseResourceSpec().
+			WithEndDate(leaseEndDate).
+			WithReservations(applyconfigv1alpha1.LeaseReservation().
+				WithFlavorInstance(applyconfigv1alpha1.LeaseFlavorInstanceReservation().WithAmount(1))))
+		Expect(applyObj(ctx, lease, patch)).To(MatchError(ContainSubstring("flavorRef")))
+	})
 
 	It("should be immutable", func(ctx context.Context) {
 		lease := leaseStub(namespace)

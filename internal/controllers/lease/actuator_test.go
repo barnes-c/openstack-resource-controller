@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"iter"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -78,11 +79,28 @@ func TestReservationOpts(t *testing.T) {
 				ResourceProperties: `["==", "$gpu", "a100"]`,
 			},
 		},
+		{
+			name: "Flavor instance",
+			reservation: orcv1alpha1.LeaseReservation{
+				FlavorInstance: &orcv1alpha1.LeaseFlavorInstanceReservation{
+					Amount:    2,
+					FlavorRef: "my-flavor",
+				},
+			},
+			// The flavor ID comes from the resolved ORC Flavor, not from the
+			// name of the reference
+			expected: leases.FlavorInstanceReservationOpts{
+				Amount:   2,
+				FlavorID: "flavor-id",
+			},
+		},
 	}
+
+	flavorIDs := map[orcv1alpha1.KubernetesNameRef]string{"my-flavor": "flavor-id"}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := reservationOpts(&tt.reservation).ToReservationMap()
+			got, err := reservationOpts(&tt.reservation, flavorIDs).ToReservationMap()
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -333,5 +351,21 @@ func TestApplyResourceStatusDates(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestSpecReservationTypes(t *testing.T) {
+	resourceSpec := &orcv1alpha1.LeaseResourceSpec{
+		Reservations: []orcv1alpha1.LeaseReservation{
+			{FlavorInstance: &orcv1alpha1.LeaseFlavorInstanceReservation{Amount: 1, FlavorRef: "flavor"}},
+			{Instance: &orcv1alpha1.LeaseInstanceReservation{Amount: 1, Vcpus: 1, MemoryMB: 128, DiskGB: ptr.To[int32](1)}},
+			{Host: &orcv1alpha1.LeaseHostReservation{Min: 1, Max: 1}},
+		},
+	}
+
+	got := specReservationTypes(resourceSpec)
+	expected := []string{leases.ResourceTypeFlavorInstance, leases.ResourceTypeHost, leases.ResourceTypeInstance}
+	if !slices.Equal(got, expected) {
+		t.Errorf("expected %v, got %v", expected, got)
 	}
 }

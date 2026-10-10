@@ -27,11 +27,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v3/api/v1alpha1"
 	"github.com/k-orc/openstack-resource-controller/v3/internal/controllers/generic/interfaces"
 	"github.com/k-orc/openstack-resource-controller/v3/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v3/internal/osclients"
+	"github.com/k-orc/openstack-resource-controller/v3/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v3/internal/util/errors"
 )
 
@@ -59,7 +61,8 @@ const leaseDeletingPollingPeriod = 15 * time.Second
 const leaseNameMaxLength = 80
 
 type leaseActuator struct {
-	osClient osclients.LeaseClient
+	osClient  osclients.LeaseClient
+	k8sClient client.Client
 }
 
 var _ createResourceActuator = leaseActuator{}
@@ -139,9 +142,29 @@ func (actuator leaseActuator) CreateResource(ctx context.Context, obj orcObjectP
 				fmt.Sprintf("lease name %q is longer than %d characters: set spec.resource.name", name, leaseNameMaxLength)))
 	}
 
+	// Resolve the flavors of all flavor reservations before creating anything
+	var reconcileStatus progress.ReconcileStatus
+	flavorIDs := make(map[orcv1alpha1.KubernetesNameRef]string)
+	for i := range resource.Reservations {
+		flavorInstance := resource.Reservations[i].FlavorInstance
+		if flavorInstance == nil {
+			continue
+		}
+		flavor, flavorReconcileStatus := dependency.FetchDependency[*orcv1alpha1.Flavor](
+			ctx, actuator.k8sClient, obj.Namespace,
+			&flavorInstance.FlavorRef, "Flavor",
+			orcv1alpha1.IsAvailable,
+		)
+		reconcileStatus = reconcileStatus.WithReconcileStatus(flavorReconcileStatus)
+		flavorIDs[flavorInstance.FlavorRef] = ptr.Deref(flavor.Status.ID, "")
+	}
+	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
+		return nil, reconcileStatus
+	}
+
 	reservations := make([]leases.ReservationOptsBuilder, len(resource.Reservations))
 	for i := range resource.Reservations {
-		reservations[i] = reservationOpts(&resource.Reservations[i])
+		reservations[i] = reservationOpts(&resource.Reservations[i], flavorIDs)
 	}
 
 	createOpts := leases.CreateOpts{
@@ -165,7 +188,14 @@ func (actuator leaseActuator) CreateResource(ctx context.Context, obj orcObjectP
 	return osResource, nil
 }
 
-func reservationOpts(reservation *orcv1alpha1.LeaseReservation) leases.ReservationOptsBuilder {
+func reservationOpts(reservation *orcv1alpha1.LeaseReservation, flavorIDs map[orcv1alpha1.KubernetesNameRef]string) leases.ReservationOptsBuilder {
+	if flavorInstance := reservation.FlavorInstance; flavorInstance != nil {
+		return leases.FlavorInstanceReservationOpts{
+			Amount:   int(flavorInstance.Amount),
+			FlavorID: flavorIDs[flavorInstance.FlavorRef],
+		}
+	}
+
 	if host := reservation.Host; host != nil {
 		return leases.HostReservationOpts{
 			Min:                  int(host.Min),
@@ -175,7 +205,7 @@ func reservationOpts(reservation *orcv1alpha1.LeaseReservation) leases.Reservati
 		}
 	}
 
-	// API validation guarantees that exactly one of host or instance is set
+	// API validation guarantees that exactly one reservation type is set
 	instance := reservation.Instance
 	return leases.InstanceReservationOpts{
 		Amount:             int(instance.Amount),
@@ -192,9 +222,12 @@ func reservationOpts(reservation *orcv1alpha1.LeaseReservation) leases.Reservati
 func specReservationTypes(resourceSpec *resourceSpecT) []string {
 	types := make([]string, len(resourceSpec.Reservations))
 	for i := range resourceSpec.Reservations {
-		if resourceSpec.Reservations[i].Host != nil {
+		switch reservation := &resourceSpec.Reservations[i]; {
+		case reservation.Host != nil:
 			types[i] = leases.ResourceTypeHost
-		} else {
+		case reservation.FlavorInstance != nil:
+			types[i] = leases.ResourceTypeFlavorInstance
+		default:
 			types[i] = leases.ResourceTypeInstance
 		}
 	}
@@ -270,7 +303,8 @@ func newActuator(ctx context.Context, orcObject *orcv1alpha1.Lease, controller i
 	}
 
 	return leaseActuator{
-		osClient: osClient,
+		osClient:  osClient,
+		k8sClient: controller.GetK8sClient(),
 	}, nil
 }
 

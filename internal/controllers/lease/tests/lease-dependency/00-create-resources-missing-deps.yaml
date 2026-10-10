@@ -1,0 +1,19 @@
+---
+apiVersion: openstack.k-orc.cloud/v1alpha1
+kind: Lease
+metadata:
+  name: lease-dependency
+spec:
+  cloudCredentialsRef:
+    cloudName: openstack
+    secretName: openstack-clouds
+  managementPolicy: managed
+  resource:
+    # Each lease test uses its own window so that they do not compete for the
+    # capacity of the single DevStack host.
+    startDate: "2093-01-01T10:00:00Z"
+    endDate: "2093-01-01T11:00:00Z"
+    reservations:
+      - flavorInstance:
+          amount: 1
+          flavorRef: lease-dependency
